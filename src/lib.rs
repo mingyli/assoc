@@ -1,11 +1,11 @@
-//! [`AssocListExt`] is a trait extension that allows you to work with [`Vec<(K, V)>`][Vec] as if it
+//! [`AssocExt`] is a trait extension that allows you to work with [`Vec<(K, V)>`][Vec] as if it
 //! were a map.
 //! It provides APIs for querying, adding, and removing key-value pairs, as well as an [`Entry`]
 //! API.
 //! It places no constraints on the keys other than [`PartialEq`].
 //!
 //! ```rust
-//! use assoc::AssocListExt;
+//! use assoc::AssocExt;
 //!
 //! #[derive(PartialEq, Debug)]
 //! enum MyKey {
@@ -48,12 +48,12 @@
 //! ```
 //!
 //! Strictly speaking, a map's keys should implement `Eq`, which is why this crate provides a
-//! [`AssocListStrictExt`] as well.
-//! This trait extension behaves like `AssocListExt` but requires `K: Eq`.
+//! [`AssocStrictExt`] as well.
+//! This trait extension behaves like `AssocExt` but requires `K: Eq`.
 //!
 //! [`HashMap`]: std::collections::HashMap
 //! [`BTreeMap`]: std::collections::BTreeMap
 //! [`Entry`]: vec::Entry
 pub mod vec;
 
-pub use vec::{AssocListExt, AssocListStrictExt};
+pub use vec::{AssocExt, AssocStrictExt};

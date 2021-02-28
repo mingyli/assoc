@@ -1,6 +1,6 @@
-/// A view into a single entry in an association list. The entry may be vacant or occupied.
+/// A view into a single entry in an associative array. The entry may be vacant or occupied.
 ///
-/// Returned by the [`AssocListExt::entry`][crate::AssocListExt::entry] method.
+/// Returned by the [`AssocExt::entry`][crate::AssocExt::entry] method.
 pub enum Entry<'a, K, V>
 where
     K: 'a,
@@ -13,7 +13,7 @@ where
     Occupied(OccupiedEntry<'a, K, V>),
 }
 
-/// A view into a vacant entry in an association list. It is part of the [`Entry`] enum.
+/// A view into a vacant entry in an associative array. It is part of the [`Entry`] enum.
 pub struct VacantEntry<'a, K: 'a, V: 'a> {
     vec: &'a mut Vec<(K, V)>,
     key: K,
@@ -43,7 +43,7 @@ impl<'a, K: 'a, V: 'a> VacantEntry<'a, K, V> {
     }
 }
 
-/// A view into an occupied entry in an association list. It is part of the [`Entry`] enum.
+/// A view into an occupied entry in an associative array. It is part of the [`Entry`] enum.
 pub struct OccupiedEntry<'a, K, V> {
     vec: &'a mut Vec<(K, V)>,
     key: K,
@@ -60,7 +60,7 @@ impl<'a, K: 'a, V: 'a> OccupiedEntry<'a, K, V> {
         &self.key
     }
 
-    /// Take ownership of the key-value pair from the association list.
+    /// Take ownership of the key-value pair from the associative array.
     pub fn remove_entry(self) -> (K, V) {
         self.vec.swap_remove(self.index)
     }
@@ -78,7 +78,7 @@ impl<'a, K: 'a, V: 'a> OccupiedEntry<'a, K, V> {
     }
 
     /// Convert the entry into a mutable reference to the value in the entry.
-    /// This mutable reference has a lifetime bound by the lifetime of the association map.
+    /// This mutable reference has a lifetime bound by the lifetime of the associative array.
     pub fn into_mut(self) -> &'a mut V {
         let (_, v) = &mut self.vec[self.index];
         v
@@ -102,7 +102,7 @@ impl<'a, K, V> Entry<'a, K, V> {
     /// mutable reference to the value in the entry.
     ///
     /// ```rust
-    /// use assoc::AssocListExt;
+    /// use assoc::AssocExt;
     ///
     /// let mut map = vec![("a", 1), ("b", 2)];
     /// map.entry("c").or_insert(3);
@@ -120,7 +120,7 @@ impl<'a, K, V> Entry<'a, K, V> {
     /// and returns a mutable reference to the value in the entry.
     ///
     /// ```rust
-    /// use assoc::AssocListExt;
+    /// use assoc::AssocExt;
     ///
     /// let mut map = Vec::new();
     /// map.entry("c").or_insert_with(|| 3);
@@ -144,7 +144,7 @@ impl<'a, K, V> Entry<'a, K, V> {
     /// unnecessary, unlike with [`Entry::or_insert_with`].
     ///
     /// ```rust
-    /// use assoc::AssocListExt;
+    /// use assoc::AssocExt;
     ///
     /// let mut map = vec![("a", 1), ("b", 2)];
     /// map.entry("c").or_insert_with_key(|key| key.len());
@@ -166,7 +166,7 @@ impl<'a, K, V> Entry<'a, K, V> {
     /// Returns a reference to this entry's key.
     ///
     /// ```rust
-    /// use assoc::AssocListExt;
+    /// use assoc::AssocExt;
     ///
     /// let mut map = vec![("a", 1), ("b", 2)];
     /// assert_eq!(map.entry("a").key(), &"a");
@@ -179,10 +179,10 @@ impl<'a, K, V> Entry<'a, K, V> {
     }
 
     /// Provides in-place mutable access to an occupied entry before any potential inserts into the
-    /// association list.
+    /// associative array.
     ///
     /// ```rust
-    /// use assoc::AssocListExt;
+    /// use assoc::AssocExt;
     ///
     /// let mut map = vec![("a", 1), ("b", 2)];
     /// map.entry("c").and_modify(|e| *e += 1).or_insert(3);
@@ -211,7 +211,7 @@ where
     V: 'a + Default,
 {
     /// ```rust
-    /// use assoc::AssocListExt;
+    /// use assoc::AssocExt;
     ///
     /// let mut map = vec![("a", 1), ("b", 2)];
     /// map.entry("c").or_default();
