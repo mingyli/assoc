@@ -7,48 +7,11 @@ where
     K: PartialEq,
 {
     fn entry(&mut self, key: K) -> Entry<K, V> {
-        for (i, (k, _)) in self.iter_mut().enumerate() {
-            if k == &key {
-                return Entry::Occupied(self, key, i);
-            }
+        let found = self.iter_mut().enumerate().find(|(_, (k, _))| k == &key);
+        match found {
+            None => Entry::Vacant(VacantEntry(self, key)),
+            Some((i, _)) => Entry::Occupied(OccupiedEntry(self, key, i)),
         }
-        Entry::Vacant(self, key)
-    }
-}
-
-use std::collections::{LinkedList, VecDeque};
-trait Pushable<T> {
-    fn push(&mut self, t: T);
-    fn last_mut(&mut self) -> Option<&mut T>;
-}
-
-impl<T> Pushable<T> for Vec<T> {
-    fn push(&mut self, t: T) {
-        Vec::push(self, t)
-    }
-
-    fn last_mut(&mut self) -> Option<&mut T> {
-        <[T]>::last_mut(self)
-    }
-}
-
-impl<T> Pushable<T> for VecDeque<T> {
-    fn push(&mut self, t: T) {
-        VecDeque::push_back(self, t)
-    }
-
-    fn last_mut(&mut self) -> Option<&mut T> {
-        VecDeque::back_mut(self)
-    }
-}
-
-impl<T> Pushable<T> for LinkedList<T> {
-    fn push(&mut self, t: T) {
-        LinkedList::push_back(self, t)
-    }
-
-    fn last_mut(&mut self) -> Option<&mut T> {
-        LinkedList::back_mut(self)
     }
 }
 
@@ -57,8 +20,61 @@ where
     K: 'a,
     V: 'a,
 {
-    Vacant(&'a mut Vec<(K, V)>, K),
-    Occupied(&'a mut Vec<(K, V)>, K, usize),
+    Vacant(VacantEntry<'a, K, V>),
+    Occupied(OccupiedEntry<'a, K, V>),
+}
+
+pub struct VacantEntry<'a, K: 'a, V: 'a>(&'a mut Vec<(K, V)>, K);
+
+impl<'a, K: 'a, V: 'a> VacantEntry<'a, K, V> {
+    pub fn key(&self) -> &K {
+        &self.1
+    }
+
+    pub fn into_key(self) -> K {
+        self.1
+    }
+
+    pub fn insert(self, v: V) -> &'a mut V {
+        self.0.push((self.1, v));
+        let (_, v) = self.0.last_mut().unwrap();
+        v
+    }
+}
+
+pub struct OccupiedEntry<'a, K, V>(&'a mut Vec<(K, V)>, K, usize);
+
+impl<'a, K: 'a, V: 'a> OccupiedEntry<'a, K, V> {
+    pub fn key(&self) -> &K {
+        &self.1
+    }
+
+    pub fn remove_entry(self) -> (K, V) {
+        self.0.swap_remove(self.2)
+    }
+
+    pub fn get(&self) -> &V {
+        &self.0[self.2].1
+    }
+
+    pub fn get_mut(&mut self) -> &mut V {
+        let (_, v) = &mut self.0[self.2];
+        v
+    }
+
+    pub fn into_mut(self) -> &'a mut V {
+        let (_, v) = &mut self.0[self.2];
+        v
+    }
+
+    pub fn insert(&mut self, mut v: V) -> V {
+        std::mem::swap(&mut v, &mut self.0[self.2].1);
+        v
+    }
+
+    pub fn remove(self) -> V {
+        self.remove_entry().1
+    }
 }
 
 impl<'a, K, V> Entry<'a, K, V>
@@ -74,20 +90,13 @@ where
     ///
     /// let mut v = vec![("a", 1), ("b", 2)];
     /// v.entry("c").or_insert(3);
-    ///
     /// assert_eq!(v, vec![("a", 1), ("b", 2), ("c", 3)]);
+    /// assert_eq!(v.entry("c").or_insert(4), &3);
     /// ```
     pub fn or_insert(self, default: V) -> &'a mut V {
         match self {
-            Entry::Vacant(list, key) => {
-                list.push((key, default));
-                let (_, v) = list.last_mut().unwrap();
-                v
-            }
-            Entry::Occupied(list, _, index) => {
-                let (_, v) = list.get_mut(index).unwrap();
-                v
-            }
+            Entry::Vacant(entry) => entry.insert(default),
+            Entry::Occupied(entry) => entry.into_mut(),
         }
     }
 
@@ -97,21 +106,18 @@ where
     /// ```rust
     /// use assoc::AssocListExt;
     ///
-    /// let mut v = vec![("a", 1), ("b", 2)];
+    /// let mut v = Vec::new();
     /// v.entry("c").or_insert_with(|| 3);
-    ///
-    /// assert_eq!(v, vec![("a", 1), ("b", 2), ("c", 3)]);
+    /// assert_eq!(v, [("c", 3)]);
+    /// assert_eq!(v.entry("c").or_insert_with(|| 4), &3);
     /// ```
     pub fn or_insert_with<F>(self, default: F) -> &'a mut V
     where
         F: FnOnce() -> V,
     {
         match self {
-            Entry::Vacant(_, _) => self.or_insert(default()),
-            Entry::Occupied(list, _, index) => {
-                let (_, v) = list.get_mut(index).unwrap();
-                v
-            }
+            Entry::Vacant(_) => self.or_insert(default()),
+            Entry::Occupied(entry) => entry.into_mut(),
         }
     }
 
@@ -134,16 +140,11 @@ where
         F: FnOnce(&K) -> V,
     {
         match self {
-            Entry::Vacant(list, key) => {
-                let v = default(&key);
-                list.push((key, v));
-                let (_, v) = list.last_mut().unwrap();
-                v
+            Entry::Vacant(entry) => {
+                let v = default(entry.key());
+                entry.insert(v)
             }
-            Entry::Occupied(list, _, index) => {
-                let (_, v) = list.get_mut(index).unwrap();
-                v
-            }
+            Entry::Occupied(entry) => entry.into_mut(),
         }
     }
 
@@ -157,8 +158,8 @@ where
     /// ```
     pub fn key(&self) -> &K {
         match self {
-            Entry::Vacant(_, key) => &key,
-            Entry::Occupied(_, key, _) => &key,
+            Entry::Vacant(entry) => entry.key(),
+            Entry::Occupied(entry) => entry.key(),
         }
     }
 
@@ -177,11 +178,10 @@ where
         F: FnOnce(&mut V),
     {
         match self {
-            Entry::Vacant(list, key) => Entry::Vacant(list, key),
-            Entry::Occupied(list, key, index) => {
-                let (_, v) = list.get_mut(index).unwrap();
-                f(v);
-                Entry::Occupied(list, key, index)
+            Entry::Vacant(entry) => Entry::Vacant(entry),
+            Entry::Occupied(mut entry) => {
+                f(entry.get_mut());
+                Entry::Occupied(entry)
             }
         }
     }
