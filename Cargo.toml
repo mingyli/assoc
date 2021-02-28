@@ -1,6 +1,6 @@
 [package]
 name = "assoc"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["<mingyli34@gmail.com>"]
 edition = "2018"
 description = "Treat vectors like associative arrays"
