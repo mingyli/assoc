@@ -1,8 +1,14 @@
 [package]
 name = "assoc"
 version = "0.1.0"
-authors = ["Ming <mingyli34@gmail.com>"]
+authors = ["<mingyli34@gmail.com>"]
 edition = "2018"
+description = "Treat vectors like association lists"
+documentation = "https://docs.rs/assoc"
+readme = "README.md"
+homepage = "https://github.com/mingyli/assoc"
+repository = "https://github.com/mingyli/assoc"
+license = "MIT"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
