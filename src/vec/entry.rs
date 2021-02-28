@@ -1,20 +1,3 @@
-pub trait AssocListExt<K, V> {
-    fn entry(&mut self, key: K) -> Entry<K, V>;
-}
-
-impl<K, V> AssocListExt<K, V> for Vec<(K, V)>
-where
-    K: PartialEq,
-{
-    fn entry(&mut self, key: K) -> Entry<K, V> {
-        let found = self.iter_mut().enumerate().find(|(_, (k, _))| k == &key);
-        match found {
-            None => Entry::Vacant(VacantEntry(self, key)),
-            Some((i, _)) => Entry::Occupied(OccupiedEntry(self, key, i)),
-        }
-    }
-}
-
 pub enum Entry<'a, K, V>
 where
     K: 'a,
@@ -24,56 +7,73 @@ where
     Occupied(OccupiedEntry<'a, K, V>),
 }
 
-pub struct VacantEntry<'a, K: 'a, V: 'a>(&'a mut Vec<(K, V)>, K);
+pub struct VacantEntry<'a, K: 'a, V: 'a> {
+    vec: &'a mut Vec<(K, V)>,
+    key: K,
+}
 
 impl<'a, K: 'a, V: 'a> VacantEntry<'a, K, V> {
+    pub(crate) fn new(vec: &'a mut Vec<(K, V)>, key: K) -> VacantEntry<'a, K, V> {
+        VacantEntry { vec, key }
+    }
+
     pub fn key(&self) -> &K {
-        &self.1
+        &self.key
     }
 
     pub fn into_key(self) -> K {
-        self.1
+        self.key
     }
 
     pub fn insert(self, v: V) -> &'a mut V {
-        self.0.push((self.1, v));
-        let (_, v) = self.0.last_mut().unwrap();
+        self.vec.push((self.key, v));
+        let (_, v) = self.vec.last_mut().unwrap();
         v
     }
 }
 
-pub struct OccupiedEntry<'a, K, V>(&'a mut Vec<(K, V)>, K, usize);
+pub struct OccupiedEntry<'a, K, V> {
+    vec: &'a mut Vec<(K, V)>,
+    key: K,
+    index: usize,
+}
 
 impl<'a, K: 'a, V: 'a> OccupiedEntry<'a, K, V> {
+    pub(crate) fn new(vec: &'a mut Vec<(K, V)>, key: K, index: usize) -> OccupiedEntry<'a, K, V> {
+        OccupiedEntry { vec, key, index }
+    }
+
     pub fn key(&self) -> &K {
-        &self.1
+        &self.key
     }
 
     pub fn remove_entry(self) -> (K, V) {
-        self.0.swap_remove(self.2)
+        self.vec.swap_remove(self.index)
     }
 
     pub fn get(&self) -> &V {
-        &self.0[self.2].1
+        let (_, v) = &self.vec[self.index];
+        v
     }
 
     pub fn get_mut(&mut self) -> &mut V {
-        let (_, v) = &mut self.0[self.2];
+        let (_, v) = &mut self.vec[self.index];
         v
     }
 
     pub fn into_mut(self) -> &'a mut V {
-        let (_, v) = &mut self.0[self.2];
+        let (_, v) = &mut self.vec[self.index];
         v
     }
 
     pub fn insert(&mut self, mut v: V) -> V {
-        std::mem::swap(&mut v, &mut self.0[self.2].1);
+        std::mem::swap(&mut v, &mut self.vec[self.index].1);
         v
     }
 
     pub fn remove(self) -> V {
-        self.remove_entry().1
+        let (_, v) = self.remove_entry();
+        v
     }
 }
 

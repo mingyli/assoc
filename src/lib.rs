@@ -1,11 +1,13 @@
-mod lenient;
+pub mod vec;
 
-pub use lenient::{AssocListExt, Entry};
+pub use vec::AssocListExt;
 
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
-    }
+#[test]
+fn test_entry() {
+    use crate::AssocListExt;
+
+    let mut v = vec![("a", 1), ("b", 2)];
+    v.entry("c").or_insert(3);
+    assert_eq!(v, vec![("a", 1), ("b", 2), ("c", 3)]);
+    assert_eq!(v.entry("c").or_insert(4), &3);
 }
