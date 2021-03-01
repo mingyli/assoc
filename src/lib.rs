@@ -47,9 +47,40 @@
 //!     .collect::<HashMap<MyKey, u64>>();
 //! ```
 //!
+//! ## Performance
+//!
+//! Using a `Vec` as a general mapping data structure through `AssocExt` comes with the drawback of
+//! inefficient lookups.
+//! Since `AssocExt` cannot rely on keys being hashable or comparable, all operations that require
+//! lookups invoke a linear search through the underlying vector.
+//! Querying for a key `k` invokes `O(N)` equality comparisons with `k`.
+//!
+//! The `Entry` API eliminates the need for multiple sequential lookups (e.g. check for existence
+//! of a key, then add the key if it doesn't exist).
+//! Invoking [`AssocExt::entry`] requires one initial linear search, then constant time access for in-place
+//! mutation thereafter.
+//!
+//! ## `PartialEq` vs `Eq`
+//!
 //! Strictly speaking, a map's keys should implement `Eq`, which is why this crate provides a
 //! [`AssocStrictExt`] as well.
 //! This trait extension behaves like `AssocExt` but requires `K: Eq`.
+//!
+//! This is a notable distinction when working with keys containing floating point values. Since
+//! `f32::NAN != f32::NAN`, maps cannot update existing entries that have keys containing
+//! `f32::NAN`:
+//!
+//! ```rust
+//! use assoc::AssocExt;
+//!
+//! let mut v = vec![(1.0, "a")];
+//! v.entry(f32::NAN).or_insert("b");
+//! v.entry(f32::NAN).or_insert("c");
+//! assert_eq!(format!("{:?}", v), r#"[(1.0, "a"), (NaN, "b"), (NaN, "c")]"#);
+//! ```
+//!
+//! Using floating points as keys in a map is often a code smell, but for use cases that don't run
+//! into NaNs `AssocExt` is a great fit.
 //!
 //! [`HashMap`]: std::collections::HashMap
 //! [`BTreeMap`]: std::collections::BTreeMap
