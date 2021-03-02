@@ -1,6 +1,7 @@
 /// A view into a single entry in an associative array. The entry may be vacant or occupied.
 ///
 /// Returned by the [`AssocExt::entry`][crate::AssocExt::entry] method.
+#[derive(Debug)]
 pub enum Entry<'a, K, V>
 where
     K: 'a,
@@ -14,6 +15,7 @@ where
 }
 
 /// A view into a vacant entry in an associative array. It is part of the [`Entry`] enum.
+#[derive(Debug)]
 pub struct VacantEntry<'a, K: 'a, V: 'a> {
     vec: &'a mut Vec<(K, V)>,
     key: K,
@@ -44,6 +46,7 @@ impl<'a, K: 'a, V: 'a> VacantEntry<'a, K, V> {
 }
 
 /// A view into an occupied entry in an associative array. It is part of the [`Entry`] enum.
+#[derive(Debug)]
 pub struct OccupiedEntry<'a, K, V> {
     vec: &'a mut Vec<(K, V)>,
     key: K,
