@@ -55,6 +55,13 @@
 //! lookups invoke a linear search through the underlying vector.
 //! Querying for a key `k` invokes `O(N)` equality comparisons with `k`.
 //!
+//! Workflows that involve frequenty resizing should consider using `Vec` with `AssocExt` as it
+//! takes advantage of spatial locality during reallocation.
+//! Empirically, `Vec`s are faster than `HashMap`s and `BTreeMap`s when performing operations such
+//! as growing the maps to around 50 elements.
+//! For larger maps, the cost of linear searches begins to dominate.
+//! Unexpectedly, `Vec` has a lower memory footprint than `HashMap` and `BTreeMap`.
+//!
 //! The `Entry` API eliminates the need for multiple sequential lookups (e.g. check for existence
 //! of a key, then add the key if it doesn't exist).
 //! Invoking [`AssocExt::entry`] requires one initial linear search, then constant time access for in-place
