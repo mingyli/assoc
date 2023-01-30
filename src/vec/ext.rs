@@ -395,6 +395,9 @@ pub trait AssocStrictExt<K, V> {
         K: Borrow<Q>,
         Q: PartialEq + ?Sized;
 
+    fn keys(&self) -> Keys<'_, K, V>;
+    fn keys_mut(&mut self) -> KeysMut<'_, K, V>;
+    fn into_keys(self) -> IntoKeys<K, V>;
     fn values(&self) -> Values<'_, K, V>;
     fn values_mut(&mut self) -> ValuesMut<'_, K, V>;
     fn into_values(self) -> IntoValues<K, V>;
@@ -434,6 +437,18 @@ where
         Q: PartialEq + ?Sized,
     {
         AssocExt::remove(self, key)
+    }
+
+    fn keys(&self) -> Keys<'_, K, V> {
+        AssocExt::keys(self)
+    }
+
+    fn keys_mut(&mut self) -> KeysMut<'_, K, V> {
+        AssocExt::keys_mut(self)
+    }
+
+    fn into_keys(self) -> IntoKeys<K, V> {
+        AssocExt::into_keys(self)
     }
 
     fn values(&self) -> Values<'_, K, V> {
