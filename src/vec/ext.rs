@@ -1,6 +1,80 @@
+use core::slice::{Iter, IterMut};
 use std::borrow::Borrow;
+use std::vec::IntoIter;
 
 use crate::vec::{Entry, OccupiedEntry, VacantEntry};
+
+pub struct Keys<'a, K: 'a, V: 'a> {
+    inner: Iter<'a, (K, V)>,
+}
+
+impl<'a, K, V> Iterator for Keys<'a, K, V> {
+    type Item = &'a K;
+
+    fn next(&mut self) -> Option<&'a K> {
+        self.inner.next().map(|(k, _)| k)
+    }
+}
+
+pub struct KeysMut<'a, K: 'a, V: 'a> {
+    inner: IterMut<'a, (K, V)>,
+}
+
+impl<'a, K, V> Iterator for KeysMut<'a, K, V> {
+    type Item = &'a mut K;
+
+    fn next(&mut self) -> Option<&'a mut K> {
+        self.inner.next().map(|(k, _)| k)
+    }
+}
+
+pub struct IntoKeys<K, V> {
+    inner: IntoIter<(K, V)>,
+}
+
+impl<K, V> Iterator for IntoKeys<K, V> {
+    type Item = K;
+
+    fn next(&mut self) -> Option<K> {
+        self.inner.next().map(|(k, _)| k)
+    }
+}
+
+pub struct Values<'a, K: 'a, V: 'a> {
+    inner: Iter<'a, (K, V)>,
+}
+
+impl<'a, K, V> Iterator for Values<'a, K, V> {
+    type Item = &'a V;
+
+    fn next(&mut self) -> Option<&'a V> {
+        self.inner.next().map(|(_, v)| v)
+    }
+}
+
+pub struct ValuesMut<'a, K: 'a, V: 'a> {
+    inner: IterMut<'a, (K, V)>,
+}
+
+impl<'a, K, V> Iterator for ValuesMut<'a, K, V> {
+    type Item = &'a mut V;
+
+    fn next(&mut self) -> Option<&'a mut V> {
+        self.inner.next().map(|(_, v)| v)
+    }
+}
+
+pub struct IntoValues<K, V> {
+    inner: IntoIter<(K, V)>,
+}
+
+impl<K, V> Iterator for IntoValues<K, V> {
+    type Item = V;
+
+    fn next(&mut self) -> Option<V> {
+        self.inner.next().map(|(_, v)| v)
+    }
+}
 
 /// A trait extension that allows vectors to be treated as associative arrays.
 pub trait AssocExt<K, V> {
@@ -70,6 +144,88 @@ pub trait AssocExt<K, V> {
     where
         K: Borrow<Q>,
         Q: PartialEq + ?Sized;
+
+    /// Get an iterator over the keys of the map.
+    ///
+    /// ```rust
+    /// use assoc::AssocExt;
+    ///
+    /// let mut map = vec![("a", 1), ("b", 2)];
+    /// let mut iter = map.keys();
+    ///
+    /// assert_eq!(iter.next().unwrap(), &"a");
+    /// assert_eq!(iter.next().unwrap(), &"b");
+    /// assert_eq!(iter.next(), None);
+    /// ```
+    fn keys(&self) -> Keys<'_, K, V>;
+
+    /// Get a mutable iterator over the keys of the map.
+    ///
+    /// ```rust
+    /// use assoc::AssocExt;
+    ///
+    /// let mut map = vec![("a".to_string(), 1), ("b".to_string(), 2)];
+    ///
+    /// for key in map.keys_mut() {
+    ///     key.push_str("!");
+    /// }
+    ///
+    /// let keys: Vec<String> = map.keys().cloned().collect();
+    /// assert_eq!(keys, ["a!".to_string(), "b!".to_string()]);
+    /// ```
+    fn keys_mut(&mut self) -> KeysMut<'_, K, V>;
+
+    /// Create a consuming iterator visiting all the keys of the map.
+    ///
+    /// ```rust
+    /// use assoc::AssocExt;
+    ///
+    /// let mut map = vec![(1, "a"), (2, "b")];
+    /// let keys: Vec<i32> = map.into_keys().collect();
+    /// assert_eq!(keys, [1, 2]);
+    /// ```
+    fn into_keys(self) -> IntoKeys<K, V>;
+
+    /// Get an iterator over the values of the map.
+    ///
+    /// ```rust
+    /// use assoc::AssocExt;
+    ///
+    /// let mut map = vec![("a", 1), ("b", 2)];
+    /// let mut iter = map.values();
+    ///
+    /// assert_eq!(iter.next().unwrap(), &1);
+    /// assert_eq!(iter.next().unwrap(), &2);
+    /// assert_eq!(iter.next(), None);
+    /// ```
+    fn values(&self) -> Values<'_, K, V>;
+
+    /// Get a mutable iterator over the values of the map.
+    ///
+    /// ```rust
+    /// use assoc::AssocExt;
+    ///
+    /// let mut map = vec![(1, "a".to_string()), (2, "b".to_string())];
+    ///
+    /// for value in map.values_mut() {
+    ///     value.push_str("!");
+    /// }
+    ///
+    /// let values: Vec<String> = map.values().cloned().collect();
+    /// assert_eq!(values, ["a!".to_string(), "b!".to_string()]);
+    /// ```
+    fn values_mut(&mut self) -> ValuesMut<'_, K, V>;
+
+    /// Create a consuming iterator visiting all the values of the map.
+    ///
+    /// ```rust
+    /// use assoc::AssocExt;
+    ///
+    /// let mut map = vec![(1, "a"), (2, "b")];
+    /// let values: Vec<&str> = map.into_values().collect();
+    /// assert_eq!(values, ["a", "b"]);
+    /// ```
+    fn into_values(self) -> IntoValues<K, V>;
 }
 
 impl<K, V> AssocExt<K, V> for Vec<(K, V)>
@@ -127,6 +283,38 @@ where
                 let (_, v) = self.swap_remove(index);
                 Some(v)
             }
+        }
+    }
+
+    fn keys(&self) -> Keys<'_, K, V> {
+        Keys { inner: self.iter() }
+    }
+
+    fn keys_mut(&mut self) -> KeysMut<'_, K, V> {
+        KeysMut {
+            inner: self.iter_mut(),
+        }
+    }
+
+    fn into_keys(self) -> IntoKeys<K, V> {
+        IntoKeys {
+            inner: self.into_iter(),
+        }
+    }
+
+    fn values(&self) -> Values<'_, K, V> {
+        Values { inner: self.iter() }
+    }
+
+    fn values_mut(&mut self) -> ValuesMut<'_, K, V> {
+        ValuesMut {
+            inner: self.iter_mut(),
+        }
+    }
+
+    fn into_values(self) -> IntoValues<K, V> {
+        IntoValues {
+            inner: self.into_iter(),
         }
     }
 }
@@ -206,6 +394,10 @@ pub trait AssocStrictExt<K, V> {
     where
         K: Borrow<Q>,
         Q: PartialEq + ?Sized;
+
+    fn values(&self) -> Values<'_, K, V>;
+    fn values_mut(&mut self) -> ValuesMut<'_, K, V>;
+    fn into_values(self) -> IntoValues<K, V>;
 }
 
 impl<K, V> AssocStrictExt<K, V> for Vec<(K, V)>
@@ -242,5 +434,17 @@ where
         Q: PartialEq + ?Sized,
     {
         AssocExt::remove(self, key)
+    }
+
+    fn values(&self) -> Values<'_, K, V> {
+        AssocExt::values(self)
+    }
+
+    fn values_mut(&mut self) -> ValuesMut<'_, K, V> {
+        AssocExt::values_mut(self)
+    }
+
+    fn into_values(self) -> IntoValues<K, V> {
+        AssocExt::into_values(self)
     }
 }
