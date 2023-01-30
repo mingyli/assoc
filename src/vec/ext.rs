@@ -4,6 +4,7 @@ use std::vec::IntoIter;
 
 use crate::vec::{Entry, OccupiedEntry, VacantEntry};
 
+#[must_use = "iterators are lazy and do nothing unless consumed"]
 pub struct Keys<'a, K: 'a, V: 'a> {
     inner: Iter<'a, (K, V)>,
 }
@@ -16,6 +17,7 @@ impl<'a, K, V> Iterator for Keys<'a, K, V> {
     }
 }
 
+#[must_use = "iterators are lazy and do nothing unless consumed"]
 pub struct KeysMut<'a, K: 'a, V: 'a> {
     inner: IterMut<'a, (K, V)>,
 }
@@ -28,6 +30,7 @@ impl<'a, K, V> Iterator for KeysMut<'a, K, V> {
     }
 }
 
+#[must_use = "iterators are lazy and do nothing unless consumed"]
 pub struct IntoKeys<K, V> {
     inner: IntoIter<(K, V)>,
 }
@@ -40,6 +43,7 @@ impl<K, V> Iterator for IntoKeys<K, V> {
     }
 }
 
+#[must_use = "iterators are lazy and do nothing unless consumed"]
 pub struct Values<'a, K: 'a, V: 'a> {
     inner: Iter<'a, (K, V)>,
 }
@@ -52,6 +56,7 @@ impl<'a, K, V> Iterator for Values<'a, K, V> {
     }
 }
 
+#[must_use = "iterators are lazy and do nothing unless consumed"]
 pub struct ValuesMut<'a, K: 'a, V: 'a> {
     inner: IterMut<'a, (K, V)>,
 }
@@ -64,6 +69,7 @@ impl<'a, K, V> Iterator for ValuesMut<'a, K, V> {
     }
 }
 
+#[must_use = "iterators are lazy and do nothing unless consumed"]
 pub struct IntoValues<K, V> {
     inner: IntoIter<(K, V)>,
 }
