@@ -1,5 +1,6 @@
-use core::slice::{Iter, IterMut};
 use std::borrow::Borrow;
+use std::fmt;
+use std::slice::{Iter, IterMut};
 use std::vec::IntoIter;
 
 use crate::vec::{Entry, OccupiedEntry, VacantEntry};
@@ -17,16 +18,23 @@ impl<'a, K, V> Iterator for Keys<'a, K, V> {
     }
 }
 
-#[must_use = "iterators are lazy and do nothing unless consumed"]
-pub struct KeysMut<'a, K: 'a, V: 'a> {
-    inner: IterMut<'a, (K, V)>,
+impl<K: fmt::Debug, V> fmt::Debug for Keys<'_, K, V> {
+    /// ```rust
+    /// use assoc::AssocExt;
+    ///
+    /// let map = vec![("a", 1), ("b", 2)];
+    /// assert_eq!(format!("{:?}", map.keys()), r#"["a", "b"]"#);
+    /// ```
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_list().entries(self.clone()).finish()
+    }
 }
 
-impl<'a, K, V> Iterator for KeysMut<'a, K, V> {
-    type Item = &'a mut K;
-
-    fn next(&mut self) -> Option<&'a mut K> {
-        self.inner.next().map(|(k, _)| k)
+impl<K, V> Clone for Keys<'_, K, V> {
+    fn clone(&self) -> Self {
+        Keys {
+            inner: self.inner.clone(),
+        }
     }
 }
 
@@ -165,22 +173,6 @@ pub trait AssocExt<K, V> {
     /// ```
     fn keys(&self) -> Keys<'_, K, V>;
 
-    /// Get a mutable iterator over the keys of the map.
-    ///
-    /// ```rust
-    /// use assoc::AssocExt;
-    ///
-    /// let mut map = vec![("a".to_string(), 1), ("b".to_string(), 2)];
-    ///
-    /// for key in map.keys_mut() {
-    ///     key.push_str("!");
-    /// }
-    ///
-    /// let keys: Vec<String> = map.keys().cloned().collect();
-    /// assert_eq!(keys, ["a!".to_string(), "b!".to_string()]);
-    /// ```
-    fn keys_mut(&mut self) -> KeysMut<'_, K, V>;
-
     /// Create a consuming iterator visiting all the keys of the map.
     ///
     /// ```rust
@@ -296,12 +288,6 @@ where
         Keys { inner: self.iter() }
     }
 
-    fn keys_mut(&mut self) -> KeysMut<'_, K, V> {
-        KeysMut {
-            inner: self.iter_mut(),
-        }
-    }
-
     fn into_keys(self) -> IntoKeys<K, V> {
         IntoKeys {
             inner: self.into_iter(),
@@ -402,7 +388,6 @@ pub trait AssocStrictExt<K, V> {
         Q: PartialEq + ?Sized;
 
     fn keys(&self) -> Keys<'_, K, V>;
-    fn keys_mut(&mut self) -> KeysMut<'_, K, V>;
     fn into_keys(self) -> IntoKeys<K, V>;
     fn values(&self) -> Values<'_, K, V>;
     fn values_mut(&mut self) -> ValuesMut<'_, K, V>;
@@ -447,10 +432,6 @@ where
 
     fn keys(&self) -> Keys<'_, K, V> {
         AssocExt::keys(self)
-    }
-
-    fn keys_mut(&mut self) -> KeysMut<'_, K, V> {
-        AssocExt::keys_mut(self)
     }
 
     fn into_keys(self) -> IntoKeys<K, V> {
