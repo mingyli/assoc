@@ -226,7 +226,7 @@ pub trait AssocExt<K, V> {
     /// ```rust
     /// use assoc::AssocExt;
     ///
-    /// let mut map = vec![("a", 1), ("b", 2)];
+    /// let map = vec![("a", 1), ("b", 2)];
     /// let mut iter = map.keys();
     ///
     /// assert_eq!(iter.next().unwrap(), &"a");
@@ -240,7 +240,7 @@ pub trait AssocExt<K, V> {
     /// ```rust
     /// use assoc::AssocExt;
     ///
-    /// let mut map = vec![(1, "a"), (2, "b")];
+    /// let map = vec![(1, "a"), (2, "b")];
     /// let keys: Vec<i32> = map.into_keys().collect();
     /// assert_eq!(keys, [1, 2]);
     /// ```
@@ -251,7 +251,7 @@ pub trait AssocExt<K, V> {
     /// ```rust
     /// use assoc::AssocExt;
     ///
-    /// let mut map = vec![("a", 1), ("b", 2)];
+    /// let map = vec![("a", 1), ("b", 2)];
     /// let mut iter = map.values();
     ///
     /// assert_eq!(iter.next().unwrap(), &1);
@@ -281,7 +281,7 @@ pub trait AssocExt<K, V> {
     /// ```rust
     /// use assoc::AssocExt;
     ///
-    /// let mut map = vec![(1, "a"), (2, "b")];
+    /// let map = vec![(1, "a"), (2, "b")];
     /// let values: Vec<&str> = map.into_values().collect();
     /// assert_eq!(values, ["a", "b"]);
     /// ```
