@@ -51,6 +51,20 @@ impl<K, V> Iterator for IntoKeys<K, V> {
     }
 }
 
+impl<K: fmt::Debug, V> fmt::Debug for IntoKeys<K, V> {
+    /// ```rust
+    /// use assoc::AssocExt;
+    ///
+    /// let map = vec![("a", 1), ("b", 2)];
+    /// assert_eq!(format!("{:?}", map.into_keys()), r#"["a", "b"]"#);
+    /// ```
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_list()
+            .entries(self.inner.as_slice().iter().map(|(k, _)| k))
+            .finish()
+    }
+}
+
 #[must_use = "iterators are lazy and do nothing unless consumed"]
 pub struct Values<'a, K: 'a, V: 'a> {
     inner: Iter<'a, (K, V)>,
@@ -61,6 +75,26 @@ impl<'a, K, V> Iterator for Values<'a, K, V> {
 
     fn next(&mut self) -> Option<&'a V> {
         self.inner.next().map(|(_, v)| v)
+    }
+}
+
+impl<K, V: fmt::Debug> fmt::Debug for Values<'_, K, V> {
+    /// ```rust
+    /// use assoc::AssocExt;
+    ///
+    /// let map = vec![("a", 1), ("b", 2)];
+    /// assert_eq!(format!("{:?}", map.values()), "[1, 2]");
+    /// ```
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_list().entries(self.clone()).finish()
+    }
+}
+
+impl<K, V> Clone for Values<'_, K, V> {
+    fn clone(&self) -> Self {
+        Values {
+            inner: self.inner.clone(),
+        }
     }
 }
 
@@ -77,6 +111,20 @@ impl<'a, K, V> Iterator for ValuesMut<'a, K, V> {
     }
 }
 
+impl<K, V: fmt::Debug> fmt::Debug for ValuesMut<'_, K, V> {
+    /// ```rust
+    /// use assoc::AssocExt;
+    ///
+    /// let mut map = vec![("a", 1), ("b", 2)];
+    /// assert_eq!(format!("{:?}", map.values_mut()), "[1, 2]");
+    /// ```
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_list()
+            .entries(self.inner.as_slice().iter().map(|(_, v)| v))
+            .finish()
+    }
+}
+
 #[must_use = "iterators are lazy and do nothing unless consumed"]
 pub struct IntoValues<K, V> {
     inner: IntoIter<(K, V)>,
@@ -87,6 +135,20 @@ impl<K, V> Iterator for IntoValues<K, V> {
 
     fn next(&mut self) -> Option<V> {
         self.inner.next().map(|(_, v)| v)
+    }
+}
+
+impl<K, V: fmt::Debug> fmt::Debug for IntoValues<K, V> {
+    /// ```rust
+    /// use assoc::AssocExt;
+    ///
+    /// let map = vec![("a", 1), ("b", 2)];
+    /// assert_eq!(format!("{:?}", map.into_values()), "[1, 2]");
+    /// ```
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_list()
+            .entries(self.inner.as_slice().iter().map(|(_, v)| v))
+            .finish()
     }
 }
 
